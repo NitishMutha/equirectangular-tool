@@ -120,7 +120,10 @@ def main(args):
 
 # test the class
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    example_text = '''example:
+        python .\\nfov.py -i .\\images\\360.jpg -tw 800 -th 400 -o .\\res.jpg
+    '''
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, epilog=example_text)
     parser.add_argument("-i", "--input_pano", type=is_file, dest="pano", help="A path to input 360 pano", required=True)
     parser.add_argument("-c", "--center_point", nargs=2, type=float, default=[0.5, 0.5], help="A camera center [0; 1]")
     parser.add_argument("-tw", "--tile_width", type=int, help="A target tile width", required=True)
