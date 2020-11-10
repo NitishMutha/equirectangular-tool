@@ -12,8 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 from math import pi
+import os
+
+import imageio as im
 import numpy as np
+
+def is_file(arg):
+    if not os.path.isfile(arg):
+        raise argparse.ArgumentTypeError("An input file does not exist")
+    return arg
 
 class NFOV():
     def __init__(self, height=400, width=800):
@@ -88,9 +97,6 @@ class NFOV():
         CC = np.multiply(C, np.array([wc, wc, wc]).T)
         DD = np.multiply(D, np.array([wd, wd, wd]).T)
         nfov = np.reshape(np.round(AA + BB + CC + DD).astype(np.uint8), [self.height, self.width, 3])
-        import matplotlib.pyplot as plt
-        plt.imshow(nfov)
-        plt.show()
         return nfov
 
     def toNFOV(self, frame, center_point):
@@ -104,11 +110,27 @@ class NFOV():
         spericalCoord = self._calcSphericaltoGnomonic(convertedScreenCoord)
         return self._bilinear_interpolation(spericalCoord)
 
+def main(args):
+    img = im.imread(args.pano)
+    nfov = NFOV(args.tile_height, args.tile_width)
+    # camera center point (valid range [0,1])
+    center_point = np.array(args.center_point)  
+    tile = nfov.toNFOV(img, center_point)
+    im.imwrite(args.output_tile, tile)
 
 # test the class
 if __name__ == '__main__':
-    import imageio as im
-    img = im.imread('images/360.jpg')
-    nfov = NFOV()
-    center_point = np.array([0.5, .5])  # camera center point (valid range [0,1])
-    nfov.toNFOV(img, center_point)
+    example_text = '''example:
+        python .\\nfov.py -i .\\images\\360.jpg -tw 800 -th 400 -o .\\res.jpg
+    '''
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, epilog=example_text)
+    parser.add_argument("-i", "--input_pano", type=is_file, dest="pano", help="A path to input 360 pano", required=True)
+    parser.add_argument("-c", "--center_point", nargs=2, type=float, default=[0.5, 0.5], help="A camera center [0; 1]")
+    parser.add_argument("-tw", "--tile_width", type=int, help="A target tile width", required=True)
+    parser.add_argument("-th", "--tile_height", type=int, help="A target tile height", required=True)
+    parser.add_argument("-o", "--output_tile", type=str, help="A path to output tile", required=True)
+
+    args = parser.parse_args()
+    main(args)
+
+ 
